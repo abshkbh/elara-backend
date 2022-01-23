@@ -23,7 +23,7 @@ class User(db.Document):
                 "email": self.email}
 
 
-@app.route('/', methods=['GET'])
+@app.route('/v1', methods=['GET'])
 def query_records():
     name = request.args.get('name')
     user = User.objects(name=name).first()
@@ -33,7 +33,7 @@ def query_records():
         return jsonify(user.to_json())
 
 
-@app.route('/', methods=['PUT'])
+@app.route('/v1', methods=['PUT'])
 def create_record():
     record = json.loads(request.data)
     user = User(name=record['name'],
@@ -42,7 +42,7 @@ def create_record():
     return jsonify(user.to_json())
 
 
-@app.route('/', methods=['POST'])
+@app.route('/v1', methods=['POST'])
 def update_record():
     record = json.loads(request.data)
     user = User.objects(name=record['name']).first()
@@ -53,7 +53,7 @@ def update_record():
     return jsonify(user.to_json())
 
 
-@app.route('/', methods=['DELETE'])
+@app.route('/v1', methods=['DELETE'])
 def delete_record():
     record = json.loads(request.data)
     user = User.objects(name=record['name']).first()
