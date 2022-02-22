@@ -67,12 +67,8 @@ def create_record():
         return jsonify({'error': 'data not found'})
 
     # If the url has a "period" in it then mongo engine will complain while saving the object.
-    if not url in user.annotations:
-        user.annotations[url] = [Annotation(
-            time_stamp=time_stamp, content=content)]
-    else:
-        user.annotations[url].append(Annotation(
-            time_stamp=time_stamp, content=content))
+    user.annotations.setdefault(url, []).append(Annotation(
+        time_stamp=time_stamp, content=content))
     user.save()
     return jsonify(user.to_json())
 
