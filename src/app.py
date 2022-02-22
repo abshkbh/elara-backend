@@ -42,7 +42,7 @@ user.save()
 print("After Save")
 
 
-@app.route('/v1/', methods=['GET'])
+@app.route('/v1/list/', methods=['GET'])
 def query_records():
     print("In GET")
     name = request.args.get('name')
@@ -53,7 +53,7 @@ def query_records():
         return jsonify(user.to_json())
 
 
-@app.route('/v1/', methods=['PUT'])
+@app.route('/v1/add/', methods=['PUT'])
 def create_record():
     record = json.loads(request.data)
     name = record['name']
@@ -67,6 +67,7 @@ def create_record():
         return jsonify({'error': 'data not found'})
 
     # If the url has a "period" in it then mongo engine will complain while saving the object.
+    # TODO: Same time stamps are added not updated.
     user.annotations.setdefault(url, []).append(Annotation(
         time_stamp=time_stamp, content=content))
     user.save()
