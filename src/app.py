@@ -57,18 +57,19 @@ def query_records():
 def create_record():
     record = json.loads(request.data)
     name = record['name']
-    url = record["url"]
+    # Id extracted from a Youtube URL.
+    video_id = record["video_id"]
     time_stamp = record["ts"]
     content = record["content"]
-    print("Name {} Url {} Ts {} Content {}".format(
-        name, url, time_stamp, content))
+    print("Name {} video_id {} Ts {} Content {}".format(
+        name, video_id, time_stamp, content))
     user = User.objects(name=name).first()
     if not user:
         return jsonify({'error': 'data not found'})
 
     # If the url has a "period" in it then mongo engine will complain while saving the object.
     # TODO: Same time stamps are added not updated.
-    user.annotations.setdefault(url, []).append(Annotation(
+    user.annotations.setdefault(video_id, []).append(Annotation(
         time_stamp=time_stamp, content=content))
     user.save()
     return jsonify(user.to_json())
