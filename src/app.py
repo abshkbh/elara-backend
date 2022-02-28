@@ -41,7 +41,7 @@ user.save()
 print("After Save")
 
 
-@app.route('/v1/list/', methods=['GET'])
+@app.route('/v1/list', methods=['GET'])
 def query_records():
     print("In GET")
     email = request.args.get('email')
@@ -54,10 +54,12 @@ def query_records():
         return jsonify(user.to_json())
 
 
-@app.route('/v1/add/', methods=['PUT'])
+@app.route('/v1/add', methods=['PUT'])
 def create_record():
     record = json.loads(request.data)
     email = record['email']
+    if not email:
+        return jsonify({'error': 'email empty'})
     # Id extracted from a Youtube URL.
     video_id = record["video_id"]
     time_stamp = record["ts"]
