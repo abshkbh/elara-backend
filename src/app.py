@@ -4,8 +4,10 @@ from __future__ import annotations
 import json
 from flask import Flask, request, jsonify
 from flask_mongoengine import MongoEngine
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 app.config['MONGODB_SETTINGS'] = {
     'db': 'your_database',
     'host': 'localhost',
@@ -51,7 +53,8 @@ def query_records():
     if not user:
         return jsonify({'error': 'data not found'})
     else:
-        return jsonify(user.to_json())
+        video_urls = list(user.annotations.keys())
+        return jsonify(video_urls=video_urls)
 
 
 @app.route('/v1/add', methods=['PUT'])
