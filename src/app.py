@@ -26,18 +26,17 @@ class Annotation(db.EmbeddedDocument):
 
 
 class User(db.Document):
-    name = db.StringField()
     email = db.StringField()
     # Maps YT video id => [{"time_stamp": XX, "content": YY}, ...].
     annotations = db.MapField(db.EmbeddedDocumentListField(Annotation))
 
     def to_json(self):
-        return {"name": self.name,
-                "email": self.email,
-                "annotations": self.annotations}
+        return {
+            "email": self.email,
+            "annotations": self.annotations}
 
 
-user = User(name="Abhishek", email="youo@gmail.com", annotations={})
+user = User(email="maverick@gmail.com", annotations={})
 user.save()
 print("After Save")
 
@@ -45,8 +44,10 @@ print("After Save")
 @app.route('/v1/list/', methods=['GET'])
 def query_records():
     print("In GET")
-    name = request.args.get('name')
-    user = User.objects(name=name).first()
+    email = request.args.get('email')
+    if not email:
+        return jsonify({'error': 'email empty'})
+    user = User.objects(email=email).first()
     if not user:
         return jsonify({'error': 'data not found'})
     else:
@@ -56,14 +57,14 @@ def query_records():
 @app.route('/v1/add/', methods=['PUT'])
 def create_record():
     record = json.loads(request.data)
-    name = record['name']
+    email = record['email']
     # Id extracted from a Youtube URL.
     video_id = record["video_id"]
     time_stamp = record["ts"]
     content = record["content"]
-    print("Name {} video_id {} Ts {} Content {}".format(
-        name, video_id, time_stamp, content))
-    user = User.objects(name=name).first()
+    print("email {} video_id {} Ts {} Content {}".format(
+        email, video_id, time_stamp, content))
+    user = User.objects(email=email).first()
     if not user:
         return jsonify({'error': 'data not found'})
 
@@ -78,7 +79,7 @@ def create_record():
 @ app.route('/v1/', methods=['POST'])
 def update_record():
     record = json.loads(request.data)
-    user = User.objects(name=record['name']).first()
+    user = User.objects(email=record['email']).first()
     if not user:
         return jsonify({'error': 'data not found'})
     else:
@@ -89,7 +90,7 @@ def update_record():
 @ app.route('/v1/', methods=['DELETE'])
 def delete_record():
     record = json.loads(request.data)
-    user = User.objects(name=record['name']).first()
+    user = User.objects(email=record['email']).first()
     if not user:
         return jsonify({'error': 'data not found'})
     else:
