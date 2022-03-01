@@ -24,13 +24,16 @@ class Annotation(db.EmbeddedDocument):
     def to_json(self):
         return {
             "time_stamp": self.time_stamp,
-            "content": self.content}
+            "content": self.content
+        }
 
 
 class User(db.Document):
     email = db.StringField()
     # Maps YT video id => [{"time_stamp": XX, "content": YY}, ...].
     annotations = db.MapField(db.EmbeddedDocumentListField(Annotation))
+    # Maps YT video id to its title. E.g. "abcd34sq" => "Top 10 moments of 2022".
+    video_id_title_map = db.MapField(db.StringField())
 
     def to_json(self):
         return {
@@ -38,9 +41,13 @@ class User(db.Document):
             "annotations": self.annotations}
 
 
-user = User(email="maverick@gmail.com", annotations={})
-user.save()
-print("After Save")
+# TODO: Used for debugging.
+user = User.objects(email="maverick@gmail.com").first()
+if not user:
+    print("Creating new user")
+    user = User(email="maverick@gmail.com",
+                annotations={}, video_id_title_map={})
+    user.save()
 
 
 @app.route('/v1/list', methods=['GET'])
@@ -53,8 +60,7 @@ def query_records():
     if not user:
         return jsonify({'error': 'data not found'})
     else:
-        video_urls = list(user.annotations.keys())
-        return jsonify(video_urls=video_urls)
+        return jsonify(user_videos=user.video_id_title_map)
 
 
 @app.route('/v1/add', methods=['PUT'])
@@ -67,8 +73,9 @@ def create_record():
     video_id = record["video_id"]
     time_stamp = record["ts"]
     content = record["content"]
-    print("email {} video_id {} Ts {} Content {}".format(
-        email, video_id, time_stamp, content))
+    video_title = record["video_title"]
+    print("email {} video_id {} Ts {} Content {} video_title {}".format(
+        email, video_id, time_stamp, content, video_title))
     user = User.objects(email=email).first()
     if not user:
         return jsonify({'error': 'data not found'})
@@ -77,6 +84,7 @@ def create_record():
     # TODO: Same time stamps are added not updated.
     user.annotations.setdefault(video_id, []).append(Annotation(
         time_stamp=time_stamp, content=content))
+    user.video_id_title_map[video_id] = video_title
     user.save()
     return jsonify(user.to_json())
 
