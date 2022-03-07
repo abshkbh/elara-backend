@@ -110,27 +110,5 @@ def create_record():
     return response_with_cors(jsonify(user.to_json()))
 
 
-@ app.route('/v1/', methods=['POST'])
-def update_record():
-    record = json.loads(request.data)
-    user = User.objects(email=record['email']).first()
-    if not user:
-        return response_with_cors(jsonify({'error': 'data not found'}))
-    else:
-        user.update(email=record['email'])
-    return response_with_cors(jsonify(user.to_json()))
-
-
-@ app.route('/v1/', methods=['DELETE'])
-def delete_record():
-    record = json.loads(request.data)
-    user = User.objects(email=record['email']).first()
-    if not user:
-        return response_with_cors(jsonify({'error': 'data not found'}))
-    else:
-        user.delete()
-    return response_with_cors(jsonify(user.to_json()))
-
-
 if __name__ == "__main__":
     app.run(debug=True)
