@@ -17,6 +17,11 @@ db = MongoEngine()
 db.init_app(app)
 
 
+def response_with_cors(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
+
+
 class Annotation(db.EmbeddedDocument):
     time_stamp = db.StringField()
     content = db.StringField()
@@ -58,9 +63,9 @@ def query_records():
         return jsonify({'error': 'email empty'})
     user = User.objects(email=email).first()
     if not user:
-        return jsonify({'error': 'data not found'})
+        return response_with_cors(jsonify({'error': 'data not found'}))
     else:
-        return jsonify(user_videos=user.video_id_title_map)
+        return response_with_cors(jsonify(user_videos=user.video_id_title_map))
 
 
 @app.route('/v1/add', methods=['PUT'])
@@ -68,7 +73,7 @@ def create_record():
     record = json.loads(request.data)
     email = record['email']
     if not email:
-        return jsonify({'error': 'email empty'})
+        return response_with_cors(jsonify({'error': 'email empty'}))
     # Id extracted from a Youtube URL.
     video_id = record["video_id"]
     time_stamp = record["ts"]
@@ -78,7 +83,7 @@ def create_record():
         email, video_id, time_stamp, content, video_title))
     user = User.objects(email=email).first()
     if not user:
-        return jsonify({'error': 'data not found'})
+        return response_with_cors(jsonify({'error': 'data not found'}))
 
     # If the url has a "period" in it then mongo engine will complain while saving the object.
     # TODO: Same time stamps are added not updated.
@@ -86,7 +91,7 @@ def create_record():
         time_stamp=time_stamp, content=content))
     user.video_id_title_map[video_id] = video_title
     user.save()
-    return jsonify(user.to_json())
+    return response_with_cors(jsonify(user.to_json()))
 
 
 @ app.route('/v1/', methods=['POST'])
@@ -94,10 +99,10 @@ def update_record():
     record = json.loads(request.data)
     user = User.objects(email=record['email']).first()
     if not user:
-        return jsonify({'error': 'data not found'})
+        return response_with_cors(jsonify({'error': 'data not found'}))
     else:
         user.update(email=record['email'])
-    return jsonify(user.to_json())
+    return response_with_cors(jsonify(user.to_json()))
 
 
 @ app.route('/v1/', methods=['DELETE'])
@@ -105,10 +110,10 @@ def delete_record():
     record = json.loads(request.data)
     user = User.objects(email=record['email']).first()
     if not user:
-        return jsonify({'error': 'data not found'})
+        return response_with_cors(jsonify({'error': 'data not found'}))
     else:
         user.delete()
-    return jsonify(user.to_json())
+    return response_with_cors(jsonify(user.to_json()))
 
 
 if __name__ == "__main__":
