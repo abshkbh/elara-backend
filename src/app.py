@@ -33,7 +33,7 @@ class Annotation(db.EmbeddedDocument):
         }
 
 
-class User(db.Document):
+class User(db.Model):
     email = db.StringField()
     # Maps YT video id => [{"time_stamp": XX, "content": YY}, ...].
     annotations = db.MapField(db.EmbeddedDocumentListField(Annotation))
