@@ -5,6 +5,8 @@ import json
 from flask import Flask, request, jsonify
 from flask_mongoengine import MongoEngine
 from flask_cors import CORS, cross_origin
+from flask_login import UserMixin
+from flask_login import LoginManager
 
 app = Flask(__name__)
 CORS(app)
@@ -15,6 +17,7 @@ app.config['MONGODB_SETTINGS'] = {
 }
 db = MongoEngine()
 db.init_app(app)
+login = LoginManager(app)
 
 
 def response_with_cors(response):
@@ -32,8 +35,11 @@ class Annotation(db.EmbeddedDocument):
             "content": self.content
         }
 
+@login.user_loader
+def load_user(id):
+    return User.query.get(int(id))
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     email = db.StringField()
     # Maps YT video id => [{"time_stamp": XX, "content": YY}, ...].
     annotations = db.MapField(db.EmbeddedDocumentListField(Annotation))
