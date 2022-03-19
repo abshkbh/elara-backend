@@ -2,10 +2,10 @@
 # encoding: utf-8
 from __future__ import annotations
 import json
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, redirect, url_for
 from flask_mongoengine import MongoEngine
 from flask_cors import CORS, cross_origin
-from flask_login import UserMixin
+from flask_login import current_user, login_user, UserMixin
 from flask_login import LoginManager
 
 app = Flask(__name__)
@@ -35,9 +35,11 @@ class Annotation(db.EmbeddedDocument):
             "content": self.content
         }
 
+
 @login.user_loader
 def load_user(id):
     return User.query.get(int(id))
+
 
 class User(UserMixin, db.Model):
     email = db.StringField()
@@ -59,6 +61,24 @@ if not user:
     user = User(email="maverick@gmail.com",
                 annotations={}, video_id_title_map={})
     user.save()
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return response_with_cors(jsonify(user.to_json()))
+    email = request.args.get('email')
+    if not email:
+        return response_with_cors(jsonify({'error': 'email empty'}))
+    password = request.args.get('password')
+    if not password:
+        return response_with_cors(jsonify({'error': 'password empty'}))
+    user = User.objects(email=email).first()
+    if user is None or not user.check_password(password):
+        print("User doesn't exist or bad password")
+        return redirect(url_for('v1/login'))
+    login_user(user)
+    return response_with_cors(jsonify(user.to_json()))
 
 
 @app.route('/v1/list', methods=['GET'])
