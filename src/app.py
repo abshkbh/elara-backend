@@ -116,19 +116,13 @@ def query_records():
 
 
 @app.route('/v1/annotations', methods=['GET'])
+@login_required
 def query_annotations():
-    print("In GET")
-    email = request.args.get('email')
-    if not email:
-        return response_with_cors(jsonify({'error': 'email empty'}))
+    print("In GET annotations")
     video_id = request.args.get('video_id')
     if not video_id:
         return response_with_cors(jsonify({'error': 'video id empty'}))
-    user = User.objects(email=email).first()
-    if not user:
-        return response_with_cors(jsonify({'error': 'data not found'}))
-    else:
-        return response_with_cors(jsonify(annotations=user.annotations[video_id]))
+    return response_with_cors(jsonify(annotations=current_user.annotations[video_id]))
 
 
 @app.route('/v1/add', methods=['PUT'])
