@@ -6,7 +6,7 @@ import bson
 from flask import Flask, request, jsonify, redirect, url_for
 from flask_mongoengine import MongoEngine
 from flask_cors import CORS, cross_origin
-from flask_login import current_user, login_user, UserMixin
+from flask_login import current_user, login_required, login_user, UserMixin
 from flask_login import LoginManager
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -109,16 +109,10 @@ def login():
 
 
 @app.route('/v1/list', methods=['GET'])
+@login_required
 def query_records():
     print("In GET")
-    email = request.args.get('email')
-    if not email:
-        return response_with_cors(jsonify({'error': 'email empty'}))
-    user = User.objects(email=email).first()
-    if not user:
-        return response_with_cors(jsonify({'error': 'data not found'}))
-    else:
-        return response_with_cors(jsonify(user_videos=user.video_id_title_map))
+    return response_with_cors(jsonify(user_videos=current_user.video_id_title_map))
 
 
 @app.route('/v1/annotations', methods=['GET'])
