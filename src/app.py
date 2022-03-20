@@ -126,29 +126,24 @@ def query_annotations():
 
 
 @app.route('/v1/add', methods=['PUT'])
+@login_required
 def create_record():
     record = json.loads(request.data)
-    email = record['email']
-    if not email:
-        return response_with_cors(jsonify({'error': 'email empty'}))
     # Id extracted from a Youtube URL.
     video_id = record["video_id"]
     time_stamp = record["ts"]
     content = record["content"]
     video_title = record["video_title"]
-    print("email {} video_id {} Ts {} Content {} video_title {}".format(
-        email, video_id, time_stamp, content, video_title))
-    user = User.objects(email=email).first()
-    if not user:
-        return response_with_cors(jsonify({'error': 'data not found'}))
+    print("video_id {} Ts {} Content {} video_title {}".format(
+        video_id, time_stamp, content, video_title))
 
     # If the url has a "period" in it then mongo engine will complain while saving the object.
     # TODO: Same time stamps are added not updated.
-    user.annotations.setdefault(video_id, []).append(Annotation(
+    current_user.annotations.setdefault(video_id, []).append(Annotation(
         time_stamp=time_stamp, content=content))
-    user.video_id_title_map[video_id] = video_title
-    user.save()
-    return response_with_cors(jsonify(user.to_json()))
+    current_user.video_id_title_map[video_id] = video_title
+    current_user.save()
+    return response_with_cors(jsonify(current_user.to_json()))
 
 
 if __name__ == "__main__":
