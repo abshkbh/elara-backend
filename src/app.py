@@ -2,6 +2,7 @@
 # encoding: utf-8
 from __future__ import annotations
 import json
+import bson
 from flask import Flask, request, jsonify, redirect, url_for
 from flask_mongoengine import MongoEngine
 from flask_cors import CORS, cross_origin
@@ -17,8 +18,7 @@ app.config['MONGODB_SETTINGS'] = {
     'port': 27017
 }
 app.config['SECRET_KEY'] = '1a2b9bdd22abaed4d12e236c78afcb9a393ec15f71bbf5dc987d54727823bcc0'
-db = MongoEngine()
-db.init_app(app)
+db = MongoEngine(app)
 login = LoginManager(app)
 
 
@@ -39,6 +39,7 @@ class Annotation(db.EmbeddedDocument):
 
 
 class User(UserMixin, db.Document):
+    uid = db.ObjectIdField(default=bson.ObjectId, primary_key=True)
     email = db.StringField()
     password_hash = db.StringField()
     # Maps YT video id => [{"time_stamp": XX, "content": YY}, ...].
@@ -51,6 +52,9 @@ class User(UserMixin, db.Document):
             "email": self.email,
             "annotations": self.annotations}
 
+    def get_id(self):
+        return str(self.uid)
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
@@ -60,7 +64,8 @@ class User(UserMixin, db.Document):
 
 @login.user_loader
 def load_user(id):
-    return User.objects(id=id).first()
+    print("Loader id={}".format(id))
+    return User.objects(uid=id).first()
 
 
 # TODO: Used for debugging.
