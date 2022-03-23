@@ -11,19 +11,22 @@ from flask_login import LoginManager
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True)
 app.config['MONGODB_SETTINGS'] = {
     'db': 'your_database',
     'host': 'localhost',
     'port': 27017
 }
 app.config['SECRET_KEY'] = '1a2b9bdd22abaed4d12e236c78afcb9a393ec15f71bbf5dc987d54727823bcc0'
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 db = MongoEngine(app)
 login = LoginManager(app)
 
 
-def response_with_cors(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
+def response_with_cors(response, origin):
+    response.headers.add('Access-Control-Allow-Origin', origin)
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    #response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
 
@@ -85,18 +88,18 @@ def login():
     print("A")
     if current_user.is_authenticated:
         print("B")
-        return response_with_cors(jsonify(current_user.to_json()))
+        return response_with_cors(jsonify(current_user.to_json()), request.environ['HTTP_ORIGIN'])
     print("C")
     record = json.loads(request.data)
     email = record['email']
     if not email:
         print("D")
-        return response_with_cors(jsonify({'error': 'email empty'}))
+        return response_with_cors(jsonify({'error': 'email empty'}), request.environ['HTTP_ORIGIN'])
     print("E")
     password = record['password']
     if not password:
         print("F")
-        return response_with_cors(jsonify({'error': 'password empty'}))
+        return response_with_cors(jsonify({'error': 'password empty'}), request.environ['HTTP_ORIGIN'])
     print("G")
     user = User.objects(email=email).first()
     if user is None or not user.check_password(password):
@@ -105,7 +108,7 @@ def login():
         return redirect(url_for('login'))
     print("I")
     login_user(user)
-    return response_with_cors(jsonify(user.to_json()))
+    return response_with_cors(jsonify(user.to_json()), request.environ['HTTP_ORIGIN'])
 
 
 @app.route('/v1/list', methods=['GET'])
