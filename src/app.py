@@ -3,10 +3,10 @@
 from __future__ import annotations
 import json
 import bson
-from flask import Flask, request, jsonify, redirect, url_for
+from flask import Flask, request, jsonify, redirect, url_for, make_response
 from flask_mongoengine import MongoEngine
 from flask_cors import CORS, cross_origin
-from flask_login import current_user, login_required, login_user, UserMixin
+from flask_login import current_user, login_required, login_user, logout_user, UserMixin
 from flask_login import LoginManager
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -74,7 +74,7 @@ def load_user(id):
 user = User.objects(email="maverick@gmail.com").first()
 if not user:
     print("Creating new user")
-    user = User(email="maverick@gmail.com",
+    user = User(email="maverick@gmail.com", password_hash={},
                 annotations={}, video_id_title_map={})
     user.save()
 else:
@@ -86,20 +86,20 @@ else:
 def login():
     if current_user.is_authenticated:
         return response_with_cors(jsonify(current_user.to_json()), request)
-    
+
     record = json.loads(request.data)
     email = record['email']
     if not email:
-        return response_with_cors(jsonify({'error': 'email empty'}), request)
-    
+        return response_with_cors(make_response(jsonify({'error': 'email empty'}), 400), request)
+
     password = record['password']
     if not password:
-        return response_with_cors(jsonify({'error': 'password empty'}), request)
-    
+        return response_with_cors(make_response(jsonify({'error': 'password empty'}), 400), request)
+
     user = User.objects(email=email).first()
     if user is None or not user.check_password(password):
         print("User doesn't exist or bad password")
-        return redirect(url_for('login'))
+        return response_with_cors(make_response(jsonify({'error': 'password empty'}), 400), request)
 
     login_user(user)
     return response_with_cors(jsonify(user.to_json()), request)
@@ -116,7 +116,7 @@ def query_records():
 def query_annotations():
     video_id = request.args.get('video_id')
     if not video_id:
-        return response_with_cors(jsonify({'error': 'video id empty'}))
+        return response_with_cors(make_response(jsonify({'error': 'video id empty'}, 400)), request)
     return response_with_cors(jsonify(annotations=current_user.annotations[video_id]), request)
 
 
@@ -139,6 +139,13 @@ def create_record():
     current_user.video_id_title_map[video_id] = video_title
     current_user.save()
     return response_with_cors(jsonify(current_user.to_json()), request)
+
+
+@app.route('/v1/logout', methods=['POST'])
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
 
 
 if __name__ == "__main__":
