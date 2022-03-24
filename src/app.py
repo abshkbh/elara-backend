@@ -84,28 +84,23 @@ else:
 
 @app.route('/v1/login', methods=['POST'])
 def login():
-    print("A")
     if current_user.is_authenticated:
-        print("B")
         return response_with_cors(jsonify(current_user.to_json()), request)
-    print("C")
+    
     record = json.loads(request.data)
     email = record['email']
     if not email:
-        print("D")
         return response_with_cors(jsonify({'error': 'email empty'}), request)
-    print("E")
+    
     password = record['password']
     if not password:
-        print("F")
         return response_with_cors(jsonify({'error': 'password empty'}), request)
-    print("G")
+    
     user = User.objects(email=email).first()
     if user is None or not user.check_password(password):
-        print("H")
         print("User doesn't exist or bad password")
         return redirect(url_for('login'))
-    print("I")
+
     login_user(user)
     return response_with_cors(jsonify(user.to_json()), request)
 
