@@ -108,14 +108,12 @@ def login():
 @app.route('/v1/list', methods=['GET'])
 @login_required
 def query_records():
-    print("In GET")
     return response_with_cors(jsonify(user_videos=current_user.video_id_title_map), request)
 
 
 @app.route('/v1/annotations', methods=['GET'])
 @login_required
 def query_annotations():
-    print("In GET annotations")
     video_id = request.args.get('video_id')
     if not video_id:
         return response_with_cors(jsonify({'error': 'video id empty'}))
