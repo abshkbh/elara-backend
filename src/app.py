@@ -145,7 +145,8 @@ def create_record():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('login'))
+    # TODO: Just need to send a 200 here. Is jsonify required ?.
+    return response_with_cors(jsonify('{}'), request)
 
 
 if __name__ == "__main__":
