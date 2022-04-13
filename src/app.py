@@ -75,11 +75,8 @@ if not user:
     print("Creating new user")
     user = User(email="maverick@gmail.com",
                 annotations={}, video_id_title_map={})
-    user.save()
-else:
     user.set_password("foo1234!")
     user.save()
-
 
 @app.route('/v1/login', methods=['POST'])
 def login():
