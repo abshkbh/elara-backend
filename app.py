@@ -78,25 +78,35 @@ if not user:
     user.set_password("foo1234!")
     user.save()
 
+
 @app.route('/v1/login', methods=['POST'])
 def login():
+    print("XXX: In Login 1")
     if current_user.is_authenticated:
+        print("XXX: In Login 2")
         return response_with_cors(jsonify(current_user.to_json()), request)
-    
+
+    print("XXX: In Login 3")
     record = json.loads(request.data)
     email = record['email']
     if not email:
+        print("XXX: In Login 4")
         return response_with_cors(jsonify({'error': 'email empty'}), request)
-    
+
+    print("XXX: In Login 5")
     password = record['password']
     if not password:
+        print("XXX: In Login 6")
         return response_with_cors(jsonify({'error': 'password empty'}), request)
-    
+
+    print("XXX: In Login 7")
     user = User.objects(email=email).first()
     if user is None or not user.check_password(password):
+        print("XXX: In Login 8")
         print("User doesn't exist or bad password")
         return redirect(url_for('login'))
 
+    print("XXX: In Login 9")
     login_user(user)
     return response_with_cors(jsonify(user.to_json()), request)
 
@@ -104,6 +114,7 @@ def login():
 @app.route('/v1/list', methods=['GET'])
 @login_required
 def query_records():
+    print("XXX: In query_records")
     return response_with_cors(jsonify(user_videos=current_user.video_id_title_map), request)
 
 
