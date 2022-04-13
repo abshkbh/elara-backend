@@ -14,8 +14,7 @@ app = Flask(__name__)
 CORS(app, supports_credentials=True)
 app.config['MONGODB_SETTINGS'] = {
     'db': 'your_database',
-    'host': 'localhost',
-    'port': 27017
+    'host': 'mongodb+srv://elaraadmin:test0000@cluster0.kh4nl.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
 }
 app.config['SECRET_KEY'] = '1a2b9bdd22abaed4d12e236c78afcb9a393ec15f71bbf5dc987d54727823bcc0'
 db = MongoEngine(app)
