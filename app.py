@@ -17,6 +17,8 @@ app.config['MONGODB_SETTINGS'] = {
     'host': 'mongodb+srv://elaraadmin:test0000@cluster0.kh4nl.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
 }
 app.config['SECRET_KEY'] = '1a2b9bdd22abaed4d12e236c78afcb9a393ec15f71bbf5dc987d54727823bcc0'
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+app.config['SESSION_COOKIE_SECURE'] = True
 db = MongoEngine(app)
 login = LoginManager(app)
 
