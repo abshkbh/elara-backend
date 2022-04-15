@@ -3,12 +3,15 @@
 from __future__ import annotations
 import json
 import bson
+import requests
 from flask import Flask, request, jsonify, make_response
 from flask_mongoengine import MongoEngine
 from flask_cors import CORS
 from flask_login import current_user, login_required, login_user, UserMixin
 from flask_login import LoginManager
 from werkzeug.security import generate_password_hash, check_password_hash
+
+GOOGLE_OAUTH_TOKEN_VERIFICATION_URL = "https://oauth2.googleapis.com/tokeninfo"
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -81,6 +84,36 @@ if not user:
     user.save()
 
 
+@app.route("/v1/oauth/google/login", methods=['POST'])
+def oauth_google_login():
+    print("XXX: In Oauth Google Login")
+    record = json.loads(request.data)
+    token = record['token']
+    token_verification_response = requests.get(
+        GOOGLE_OAUTH_TOKEN_VERIFICATION_URL, {'id_token': token})
+    print("XXX: Token: {}", token)
+    if token_verification_response.status_code != requests.codes.ok:
+        print("XXX: Google Oauth token not verified")
+        return response_with_cors(make_response(jsonify({'error': 'google oauth token not verified'}), 400), request)
+
+    token_verification_response_json = token_verification_response.json()
+    if not token_verification_response_json["email_verified"]:
+        print("XXX: Google Oauth token not verified")
+        return response_with_cors(make_response(jsonify({'error': 'google oauth email not verified'}), 400), request)
+
+    email = token_verification_response_json["email"]
+    user = User.objects(email=email).first()
+    if user is None:
+        print("Creating new user")
+        user = User(email=email, password_hash="",
+                    annotations={}, video_id_title_map={})
+        user.save()
+
+    print("XXX: Login user with email: {} after Oauth", email)
+    login_user(user)
+    return response_with_cors(jsonify({'msg': 'success'}), request)
+
+
 @app.route('/v1/login', methods=['POST'])
 def login():
     print("XXX: In Login 1")
@@ -94,7 +127,6 @@ def login():
     if not email:
         print("XXX: In Login 4")
         return response_with_cors(make_response(jsonify({'error': 'email empty'}), 400), request)
-
     print("XXX: In Login 5")
     password = record['password']
     if not password:
