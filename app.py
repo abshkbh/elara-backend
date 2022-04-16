@@ -3,9 +3,9 @@
 from __future__ import annotations
 import json
 import bson
-from flask import Flask, request, jsonify, redirect, url_for
+from flask import Flask, request, jsonify, make_response
 from flask_mongoengine import MongoEngine
-from flask_cors import CORS, cross_origin
+from flask_cors import CORS
 from flask_login import current_user, login_required, login_user, UserMixin
 from flask_login import LoginManager
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -93,20 +93,20 @@ def login():
     email = record['email']
     if not email:
         print("XXX: In Login 4")
-        return response_with_cors(jsonify({'error': 'email empty'}), request)
+        return response_with_cors(make_response(jsonify({'error': 'email empty'}), 400), request)
 
     print("XXX: In Login 5")
     password = record['password']
     if not password:
         print("XXX: In Login 6")
-        return response_with_cors(jsonify({'error': 'password empty'}), request)
+        return response_with_cors(make_response(jsonify({'error': 'password empty'}), 400), request)
 
     print("XXX: In Login 7")
     user = User.objects(email=email).first()
     if user is None or not user.check_password(password):
         print("XXX: In Login 8")
         print("User doesn't exist or bad password")
-        return redirect(url_for('login'))
+        return response_with_cors(make_response(jsonify({'error': 'invalid user or bad password'}), 400), request)
 
     print("XXX: In Login 9")
     login_user(user)
@@ -125,7 +125,7 @@ def query_records():
 def query_annotations():
     video_id = request.args.get('video_id')
     if not video_id:
-        return response_with_cors(jsonify({'error': 'video id empty'}))
+        return response_with_cors(make_response(jsonify({'error': 'video id empty'}), 400), request)
     return response_with_cors(jsonify(annotations=current_user.annotations[video_id]), request)
 
 
