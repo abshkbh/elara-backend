@@ -86,61 +86,54 @@ if not user:
 
 @app.route("/v1/oauth/google/login", methods=['POST'])
 def oauth_google_login():
-    print("XXX: In Oauth Google Login")
     record = json.loads(request.data)
     token = record['token']
     token_verification_response = requests.get(
         GOOGLE_OAUTH_TOKEN_VERIFICATION_URL, {'id_token': token})
-    print("XXX: Token: {}", token)
     if token_verification_response.status_code != requests.codes.ok:
-        print("XXX: Google Oauth token not verified")
+        print("Error: Google Oauth token not verified")
         return response_with_cors(make_response(jsonify({'error': 'google oauth token not verified'}), 400), request)
 
     token_verification_response_json = token_verification_response.json()
     if not token_verification_response_json["email_verified"]:
-        print("XXX: Google Oauth token not verified")
+        print("Error: Google Oauth email not verified")
         return response_with_cors(make_response(jsonify({'error': 'google oauth email not verified'}), 400), request)
 
     email = token_verification_response_json["email"]
     user = User.objects(email=email).first()
     if user is None:
-        print("Creating new user")
+        print("Creating new user with email: {}", email)
         user = User(email=email, password_hash="",
                     annotations={}, video_id_title_map={})
         user.save()
 
-    print("XXX: Login user with email: {} after Oauth", email)
+    print("Login user with email: {} after Oauth", email)
     login_user(user)
     return response_with_cors(jsonify({'msg': 'success'}), request)
 
 
 @app.route('/v1/login', methods=['POST'])
 def login():
-    print("XXX: In Login 1")
     if current_user.is_authenticated:
-        print("XXX: In Login 2")
         return response_with_cors(jsonify(current_user.to_json()), request)
 
-    print("XXX: In Login 3")
     record = json.loads(request.data)
     email = record['email']
     if not email:
-        print("XXX: In Login 4")
+        print("Error: Email Empty")
         return response_with_cors(make_response(jsonify({'error': 'email empty'}), 400), request)
-    print("XXX: In Login 5")
+
     password = record['password']
     if not password:
-        print("XXX: In Login 6")
+        print("Error: Password Empty")
         return response_with_cors(make_response(jsonify({'error': 'password empty'}), 400), request)
 
-    print("XXX: In Login 7")
     user = User.objects(email=email).first()
     if user is None or not user.check_password(password):
-        print("XXX: In Login 8")
-        print("User doesn't exist or bad password")
+        print("Error: User doesn't exist or bad password")
         return response_with_cors(make_response(jsonify({'error': 'invalid user or bad password'}), 400), request)
 
-    print("XXX: In Login 9")
+    print("Logging in user with email:{}", user.email)
     login_user(user)
     return response_with_cors(jsonify(user.to_json()), request)
 
@@ -148,7 +141,6 @@ def login():
 @app.route('/v1/list', methods=['GET'])
 @login_required
 def query_records():
-    print("XXX: In query_records")
     return response_with_cors(jsonify(user_videos=current_user.video_id_title_map), request)
 
 
@@ -157,6 +149,7 @@ def query_records():
 def query_annotations():
     video_id = request.args.get('video_id')
     if not video_id:
+        print("Error: Video Id empty")
         return response_with_cors(make_response(jsonify({'error': 'video id empty'}), 400), request)
     return response_with_cors(jsonify(annotations=current_user.annotations[video_id]), request)
 
