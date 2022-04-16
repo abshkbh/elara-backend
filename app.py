@@ -144,7 +144,7 @@ def oauth_google_login():
         return response_with_cors(make_response(jsonify({"error": "google oauth token not verified"}), 400), request)
 
     token_verification_response_json = token_verification_response.json()
-    if not token_verification_response_json["email_verified"]:
+    if not token_verification_response_json.get("email_verified", False):
         print("Error: Google OAuth email not verified")
         return response_with_cors(make_response(jsonify({"error": "google oauth email not verified"}), 400), request)
 
@@ -183,12 +183,12 @@ def login():
         return response_with_cors(jsonify(current_user.to_json()), request)
 
     record = json.loads(request.data)
-    email = record["email"]
+    email = record.get("email", "")
     if not email:
         print("Error: Email Empty")
         return response_with_cors(make_response(jsonify({"error": "email empty"}), 400), request)
 
-    password = record["password"]
+    password = record.get("password", "")
     if not password:
         print("Error: Password Empty")
         return response_with_cors(make_response(jsonify({"error": "password empty"}), 400), request)
@@ -227,7 +227,7 @@ For e.g. for this Youtube URL https://www.youtube.com/watch?v=TcAAARgLZ8M the vi
 @app.route("/v1/annotations", methods=["GET"])
 @login_required
 def query_annotations():
-    video_id = request.args.get("video_id")
+    video_id = request.args.get("video_id", "")
     if not video_id:
         print("Error: Video Id empty")
         return response_with_cors(make_response(jsonify({"error": "Video Id empty"}), 400), request)
@@ -250,12 +250,16 @@ This API adds an annotation associated with a video. It expects -
 def create_record():
     record = json.loads(request.data)
     # Id extracted from a Youtube URL.
-    video_id = record["video_id"]
-    time_stamp = record["ts"]
-    content = record["content"]
-    video_title = record["video_title"]
+    video_id = record.get("video_id", "")
+    time_stamp = record.get("ts", "")
+    content = record.get("content", "")
+    video_title = record.get("video_title", "")
     print("video_id {} Ts {} Content {} video_title {}".format(
         video_id, time_stamp, content, video_title))
+
+    if not video_id or not time_stamp or not content or not video_title:
+        print("Error: Invalid Data")
+        return response_with_cors(make_response(jsonify({"error": "Invalid Data"}), 400), request)
 
     # If the url has a "period" in it then mongo engine will complain while saving the object.
     # TODO: Same time stamps are added not updated.
