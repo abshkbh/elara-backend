@@ -13,6 +13,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 # URL to hit to verify a Google OAuth token.
 GOOGLE_OAUTH_TOKEN_VERIFICATION_URL = "https://oauth2.googleapis.com/tokeninfo"
+# Query parameter to append to |GOOGLE_OAUTH_TOKEN_VERIFICATION_URL| to verify a Google OAuth token.
+GOOGLE_OAUTH_TOKEN_VERIFICATION_URL_TOKEN_QUERY_PARAMETER = "id_token"
 
 app = Flask(__name__)
 
@@ -136,7 +138,7 @@ def oauth_google_login():
     record = json.loads(request.data)
     token = record["token"]
     token_verification_response = requests.get(
-        GOOGLE_OAUTH_TOKEN_VERIFICATION_URL, {"id_token": token})
+        GOOGLE_OAUTH_TOKEN_VERIFICATION_URL, {GOOGLE_OAUTH_TOKEN_VERIFICATION_URL_TOKEN_QUERY_PARAMETER: token})
     if token_verification_response.status_code != requests.codes.ok:
         print("Error: Google OAuth token not verified")
         return response_with_cors(make_response(jsonify({"error": "google oauth token not verified"}), 400), request)
