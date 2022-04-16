@@ -19,19 +19,19 @@ app = Flask(__name__)
 # We will use sessions / cookies. This requires |support_credentials| to be True.
 CORS(app, supports_credentials=True)
 
-app.config['MONGODB_SETTINGS'] = {
+app.config["MONGODB_SETTINGS"] = {
     # TODO: Is this needed if we are using a cloud instance.
-    'db': 'your_database',
+    "db": "your_database",
     # Mongo DB Instance in the cloud.
-    'host': 'mongodb+srv://elaraadmin:test0000@cluster0.kh4nl.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
+    "host": "mongodb+srv://elaraadmin:test0000@cluster0.kh4nl.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
 }
 
 # Required for cookie signing.
-app.config['SECRET_KEY'] = '1a2b9bdd22abaed4d12e236c78afcb9a393ec15f71bbf5dc987d54727823bcc0'
+app.config["SECRET_KEY"] = "1a2b9bdd22abaed4d12e236c78afcb9a393ec15f71bbf5dc987d54727823bcc0"
 
 # Required so that cookies are persisted by the Browser (especially Chrome) on cross origin clients.
-app.config['SESSION_COOKIE_SAMESITE'] = 'None'
-app.config['SESSION_COOKIE_SECURE'] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "None"
+app.config["SESSION_COOKIE_SECURE"] = True
 
 db = MongoEngine(app)
 login = LoginManager(app)
@@ -41,9 +41,9 @@ login = LoginManager(app)
 # To be able to process API calls from cross origin clients.
 # To tell clients that we support cookies.
 def response_with_cors(response, request):
-    response.headers.add('Access-Control-Allow-Origin',
-                         request.environ.get('HTTP_ORIGIN', '*'))
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    response.headers.add("Access-Control-Allow-Origin",
+                         request.environ.get("HTTP_ORIGIN", "*"))
+    response.headers.add("Access-Control-Allow-Credentials", "true")
     return response
 
 
@@ -131,20 +131,20 @@ It then logs in the associated user and returns 200. Else returns a 400 error.
 """
 
 
-@app.route("/v1/oauth/google/login", methods=['POST'])
+@app.route("/v1/oauth/google/login", methods=["POST"])
 def oauth_google_login():
     record = json.loads(request.data)
-    token = record['token']
+    token = record["token"]
     token_verification_response = requests.get(
-        GOOGLE_OAUTH_TOKEN_VERIFICATION_URL, {'id_token': token})
+        GOOGLE_OAUTH_TOKEN_VERIFICATION_URL, {"id_token": token})
     if token_verification_response.status_code != requests.codes.ok:
         print("Error: Google OAuth token not verified")
-        return response_with_cors(make_response(jsonify({'error': 'google oauth token not verified'}), 400), request)
+        return response_with_cors(make_response(jsonify({"error": "google oauth token not verified"}), 400), request)
 
     token_verification_response_json = token_verification_response.json()
     if not token_verification_response_json["email_verified"]:
         print("Error: Google OAuth email not verified")
-        return response_with_cors(make_response(jsonify({'error': 'google oauth email not verified'}), 400), request)
+        return response_with_cors(make_response(jsonify({"error": "google oauth email not verified"}), 400), request)
 
     email = token_verification_response_json["email"]
     user = User.objects(email=email).first()
@@ -156,7 +156,7 @@ def oauth_google_login():
 
     print("Login user with email: {} after OAuth", email)
     login_user(user)
-    return response_with_cors(jsonify({'msg': 'success'}), request)
+    return response_with_cors(jsonify({"msg": "success"}), request)
 
 
 """
@@ -175,28 +175,28 @@ It tries to retrieve the user corresponding to the email and password.
 """
 
 
-@app.route('/v1/login', methods=['POST'])
+@app.route("/v1/login", methods=["POST"])
 def login():
     if current_user.is_authenticated:
         return response_with_cors(jsonify(current_user.to_json()), request)
 
     record = json.loads(request.data)
-    email = record['email']
+    email = record["email"]
     if not email:
         print("Error: Email Empty")
-        return response_with_cors(make_response(jsonify({'error': 'email empty'}), 400), request)
+        return response_with_cors(make_response(jsonify({"error": "email empty"}), 400), request)
 
-    password = record['password']
+    password = record["password"]
     if not password:
         print("Error: Password Empty")
-        return response_with_cors(make_response(jsonify({'error': 'password empty'}), 400), request)
+        return response_with_cors(make_response(jsonify({"error": "password empty"}), 400), request)
 
     user = User.objects(email=email).first()
     if user is None or not user.check_password(password):
         print("Error: User doesn't exist or bad password")
-        return response_with_cors(make_response(jsonify({'error': 'invalid user or bad password'}), 400), request)
+        return response_with_cors(make_response(jsonify({"error": "invalid user or bad password"}), 400), request)
 
-    print("Logging in user with email:{}", user.email)
+    print("Logging in user with email: {}", user.email)
     login_user(user)
     return response_with_cors(jsonify(user.to_json()), request)
 
@@ -206,7 +206,7 @@ This API returns the list of videos for the current authenticated user.
 """
 
 
-@app.route('/v1/list', methods=['GET'])
+@app.route("/v1/list", methods=["GET"])
 @login_required
 def query_records():
     return response_with_cors(jsonify(user_videos=current_user.video_id_title_map), request)
@@ -222,13 +222,13 @@ For e.g. for this Youtube URL https://www.youtube.com/watch?v=TcAAARgLZ8M the vi
 """
 
 
-@app.route('/v1/annotations', methods=['GET'])
+@app.route("/v1/annotations", methods=["GET"])
 @login_required
 def query_annotations():
-    video_id = request.args.get('video_id')
+    video_id = request.args.get("video_id")
     if not video_id:
         print("Error: Video Id empty")
-        return response_with_cors(make_response(jsonify({'error': 'video id empty'}), 400), request)
+        return response_with_cors(make_response(jsonify({"error": "Video Id empty"}), 400), request)
     return response_with_cors(jsonify(annotations=current_user.annotations[video_id]), request)
 
 
@@ -243,7 +243,7 @@ This API adds an annotation associated with a video. It expects -
 """
 
 
-@app.route('/v1/add', methods=['PUT'])
+@app.route("/v1/add", methods=["PUT"])
 @login_required
 def create_record():
     record = json.loads(request.data)
