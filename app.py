@@ -7,7 +7,7 @@ import requests
 from flask import Flask, request, jsonify, make_response
 from flask_mongoengine import MongoEngine
 from flask_cors import CORS
-from flask_login import current_user, login_required, login_user, UserMixin
+from flask_login import current_user, login_required, login_user, logout_user, UserMixin
 from flask_login import LoginManager
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -268,6 +268,18 @@ def create_record():
     current_user.video_id_title_map[video_id] = video_title
     current_user.save()
     return response_with_cors(jsonify(current_user.to_json()), request)
+
+
+"""
+This API logs out the currently authenticated user. Returns a 200 response.
+"""
+
+
+@app.route("/v1/logout", methods=["POST"])
+@login_required
+def logout():
+    logout_user()
+    return response_with_cors(jsonify({"msg": "success"}), request)
 
 
 if __name__ == "__main__":
