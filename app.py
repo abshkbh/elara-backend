@@ -271,6 +271,78 @@ def create_record():
 
 
 """
+This API deletes all annotations associated with a video and all other metadata. It expects -
+{
+    'video_id' : <video_id>,
+} in the body.
+"""
+
+
+@app.route("/v1/delete/video", methods=["DELETE"])
+@login_required
+def delete_video():
+    record = json.loads(request.data)
+    # Id extracted from a Youtube URL.
+    video_id = record.get("video_id", "")
+    if not video_id:
+        print("Error: Invalid Data")
+        return response_with_cors(make_response(jsonify({"error": "Invalid Data"}), 400), request)
+
+    print("Delete Video video_id: {}".format(video_id))
+
+    if not current_user.annotations.pop(video_id, None):
+        print("Error: Failed to delete annotations for video: {}".format(video_id))
+        return response_with_cors(make_response(jsonify({"error": "Failed to delete annotations for video"}), 400), request)
+
+    if not current_user.video_id_title_map.pop(video_id, None):
+        print("Error: Failed to delete title for video: {}".format(video_id))
+        return response_with_cors(make_response(jsonify({"error": "Failed to delete title for video"}), 400), request)
+
+    current_user.save()
+    return response_with_cors(jsonify({"msg": "success"}), request)
+
+
+"""
+This API deletes an annotation at a time stamp for a given video. It expects -
+{
+    'video_id' : <video_id>,
+    'annotation_ts' : <time_stamp>,
+} in the body.
+"""
+
+
+@app.route("/v1/delete/annotation", methods=["DELETE"])
+@login_required
+def delete_annotation():
+    record = json.loads(request.data)
+    # Id extracted from a Youtube URL.
+    video_id = record.get("video_id", "")
+    if not video_id:
+        print("Error: Invalid video_id")
+        return response_with_cors(make_response(jsonify({"error": "Invalid video_id"}), 400), request)
+
+    annotation_ts = record.get("annotation_ts", "")
+    if not video_id:
+        print("Error: Invalid annotation ts")
+        return response_with_cors(make_response(jsonify({"error": "Invalid ts"}), 400), request)
+
+    print("Delete Annotation video_id: {} annotation_ts: {}".format(
+        video_id, annotation_ts))
+
+    if not video_id in current_user.annotations:
+        print("Error: Failed to find video: {}".format(video_id))
+        return response_with_cors(make_response(jsonify({"error": "Failed to find video"}), 400), request)
+    annotations = current_user.annotations[video_id]
+
+    # Filter all other annotations except the one at |time_stamp|.
+    current_user.annotations[video_id] = [
+        annotation for annotation in annotations if annotation["time_stamp"] != annotation_ts]
+
+    current_user.save()
+    return response_with_cors(jsonify({"msg": "success"}), request)
+
+
+"""
 This API logs out the currently authenticated user. Returns a 200 response.
 """
 
