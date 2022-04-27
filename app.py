@@ -290,9 +290,14 @@ def delete_video():
 
     print("Delete Video video_id: {}".format(video_id))
 
-    if not current_user.annotations.pop(video_id, None):
-        print("Error: Failed to delete annotations for video: {}".format(video_id))
-        return response_with_cors(make_response(jsonify({"error": "Failed to delete annotations for video"}), 400), request)
+    # First delete annotations for the video then delete it's title map.
+    if not video_id in current_user.annotations:
+        print("Annotations not found for video: {}".format(video_id))
+        return response_with_cors(make_response(jsonify({"error": "Annotations not found for video"}), 400), request)
+    # Safe to not catch exception as we do an explicit check before. We could have done if not
+    # annotations.pop(video_id, None), but we won't be able to differentiate between an empty list
+    # and a key error.
+    current_user.annotations.pop(video_id)
 
     if not current_user.video_id_title_map.pop(video_id, None):
         print("Error: Failed to delete title for video: {}".format(video_id))
